@@ -7,6 +7,7 @@ import (
 	"mountaineering/internal/app"
 	internalconfig "mountaineering/internal/config"
 	internallogger "mountaineering/internal/logger"
+	"mountaineering/internal/server/http"
 	internalstorage "mountaineering/internal/storage/store"
 	"os"
 	"os/signal"
@@ -41,7 +42,19 @@ func main() {
 		logger.Error("Cant connect to database", zap.Error(err))
 	}
 
-	_ = app.NewApp(logger, store)
+	application := app.NewApp(logger, store)
+
+	httpHandler := http.NewRouters(application, logger)
+	server := http.NewServer(config.HTTP.Host, config.HTTP.Port, httpHandler)
+
+	go func() {
+		server.BuildRouters()
+
+		if err := server.Start(); err != nil {
+			logger.Info("failed to start http server: " + err.Error())
+			cancel()
+		}
+	}()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
@@ -49,5 +62,9 @@ func main() {
 	select {
 	case s := <-interrupt:
 		logger.Info("[+] app stop by signal:", zap.String("signal", s.String()))
+	}
+
+	if err := server.Stop(ctx); err != nil {
+		logger.Error("[-] failed to stop http server: " + err.Error())
 	}
 }
