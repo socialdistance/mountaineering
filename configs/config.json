@@ -5,5 +5,9 @@
   },
   "storage": {
     "dsn": "postgres://postgres:postgres@localhost:54321/mountaineering?sslmode=disable"
+  },
+  "fs": {
+    "host_fs": "127.0.0.1",
+    "port_fs": "8090"
   }
 }

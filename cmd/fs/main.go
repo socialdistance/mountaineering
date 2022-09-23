@@ -7,7 +7,7 @@ import (
 	internalapp "mountaineering/internal/app"
 	internalconfig "mountaineering/internal/config"
 	internallogger "mountaineering/internal/logger"
-	internalhttp "mountaineering/internal/server/http"
+	"mountaineering/internal/server/fileserver"
 	internalstorage "mountaineering/internal/storage/store"
 	"os"
 	"os/signal"
@@ -22,7 +22,6 @@ func init() {
 }
 
 func main() {
-	// Start logger
 	logger, err := internallogger.NewLogger()
 	if err != nil {
 		panic(err)
@@ -42,10 +41,10 @@ func main() {
 		logger.Error("Cant connect to database", zap.Error(err))
 	}
 
-	application := internalapp.NewApp(logger, store)
+	application := internalapp.NewFileServerApp(logger, store)
+	httpHandler := fileserver.NewRouterFileServer(*application, logger)
 
-	httpHandler := internalhttp.NewRouters(application, logger)
-	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, httpHandler)
+	server := fileserver.NewFileServer(config.FileServer.Host, config.FileServer.Port, httpHandler)
 
 	go func() {
 		server.BuildRouters()

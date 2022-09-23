@@ -7,9 +7,15 @@ import (
 )
 
 type Config struct {
-	HTTP    HttpConf
-	Storage StorageConf
-	Logger  LoggerConf
+	HTTP       HttpConf
+	Storage    StorageConf
+	Logger     LoggerConf
+	FileServer FileServerConf
+}
+
+type FileServerConf struct {
+	Host string `json:"host_fs"`
+	Port string `json:"port_fs"`
 }
 
 type HttpConf struct {
