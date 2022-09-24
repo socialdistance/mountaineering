@@ -44,7 +44,7 @@ func main() {
 	application := internalapp.NewFileServerApp(logger, store)
 	httpHandler := fileserver.NewRouterFileServer(*application, logger)
 
-	server := fileserver.NewFileServer(config.FileServer.Host, config.FileServer.Port, httpHandler)
+	server := fileserver.NewFileServer(config.Fs.Host, config.Fs.Port, httpHandler)
 
 	go func() {
 		server.BuildRouters()

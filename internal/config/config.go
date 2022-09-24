@@ -7,10 +7,10 @@ import (
 )
 
 type Config struct {
-	HTTP       HttpConf
-	Storage    StorageConf
-	Logger     LoggerConf
-	FileServer FileServerConf
+	HTTP    HttpConf
+	Storage StorageConf
+	Logger  LoggerConf
+	Fs      FileServerConf
 }
 
 type FileServerConf struct {

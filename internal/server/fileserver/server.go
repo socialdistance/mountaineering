@@ -28,23 +28,24 @@ func NewFileServer(host, port string, router *RouterFileServer) *FileServer {
 }
 
 func (f *FileServer) BuildRouters() {
-	userApiV1 := f.e.Group("/api/v1")
-	userApiV1.Static("/", "uploads")
+	f.e.Static("/", "uploads")
+
+	f.e.POST("/upload", f.router.Upload)
 }
 
-func (s *FileServer) Start() error {
-	if err := s.e.Start(fmt.Sprintf(":%s", s.port)); err != nil && err != http.ErrServerClosed {
+func (f *FileServer) Start() error {
+	if err := f.e.Start(fmt.Sprintf(":%s", f.port)); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("server stopped: %w", err)
 	}
 
 	return nil
 }
 
-func (s *FileServer) Stop(ctx context.Context) error {
+func (f *FileServer) Stop(ctx context.Context) error {
 	optCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	if err := s.e.Shutdown(optCtx); err != nil {
+	if err := f.e.Shutdown(optCtx); err != nil {
 		return fmt.Errorf("could not shutdown server gracefuly: %w", err)
 	}
 
