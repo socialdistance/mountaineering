@@ -7,7 +7,7 @@ import (
 	internalapp "mountaineering/internal/app"
 	internalconfig "mountaineering/internal/config"
 	internallogger "mountaineering/internal/logger"
-	"mountaineering/internal/server/fileserver"
+	internalfs "mountaineering/internal/server/fileserver"
 	internalstorage "mountaineering/internal/storage/store"
 	"os"
 	"os/signal"
@@ -42,9 +42,9 @@ func main() {
 	}
 
 	application := internalapp.NewFileServerApp(logger, store)
-	httpHandler := fileserver.NewRouterFileServer(*application, logger)
+	httpHandler := internalfs.NewRouterFileServer(*application, logger)
 
-	server := fileserver.NewFileServer(config.Fs.Host, config.Fs.Port, httpHandler)
+	server := internalfs.NewFileServer(config.Fs.Host, config.Fs.Port, httpHandler)
 
 	go func() {
 		server.BuildRouters()

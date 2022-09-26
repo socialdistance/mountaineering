@@ -1,7 +1,10 @@
 package app
 
 import (
+	"context"
 	"go.uber.org/zap"
+	"mime/multipart"
+	"mountaineering/internal/storage"
 )
 
 type App struct {
@@ -10,6 +13,11 @@ type App struct {
 }
 
 type Storage interface {
+	CreateRecordForFile(ctx context.Context, file storage.File) error
+}
+
+type File interface {
+	CreateFile(files []*multipart.FileHeader) (chan string, chan error)
 }
 
 type Logger interface {

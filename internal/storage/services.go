@@ -2,6 +2,7 @@ package storage
 
 import "github.com/gofrs/uuid"
 
+// Услуги
 type Services struct {
 	ID          uuid.UUID `db:"id" json:"id"`
 	Name        string    `db:"name" json:"name"`                         // название услуги
