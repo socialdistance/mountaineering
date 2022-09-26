@@ -15,16 +15,16 @@ type File struct {
 	Description string    `db:"description" json:"description"`
 }
 
-func (f *File) CreateFile(files []*multipart.FileHeader) (*string, chan error) {
+func (f *File) CreateFile(files []*multipart.FileHeader) (chan string, chan error) {
 	chanErr := make(chan error)
-	var res string
+	res := make(chan string)
 
 	for _, file := range files {
 		// Source
 		src, err := file.Open()
 		if err != nil {
 			chanErr <- err
-			return nil, chanErr
+			return res, chanErr
 		}
 		defer src.Close()
 
@@ -32,18 +32,18 @@ func (f *File) CreateFile(files []*multipart.FileHeader) (*string, chan error) {
 		dst, err := os.Create(fmt.Sprintf("./uploads/%s", file.Filename))
 		if err != nil {
 			chanErr <- err
-			return nil, chanErr
+			return res, chanErr
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
 			chanErr <- err
-			return nil, chanErr
+			return res, chanErr
 		}
 
-		res := fmt.Sprintf("./uploads/%s", file.Filename)
+		res <- fmt.Sprintf("./uploads/%s", file.Filename)
 	}
 
-	return &res, nil
+	return res, chanErr
 }

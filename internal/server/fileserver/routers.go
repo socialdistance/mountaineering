@@ -30,6 +30,8 @@ func (r *RouterFileServer) Upload(c echo.Context) error {
 	}
 	files := form.File["files"]
 
+	r.app.UploadFileToServer(c.Request().Context(), files)
+
 	//for _, file := range files {
 	//	// Source
 	//	src, err := file.Open()

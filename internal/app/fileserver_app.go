@@ -2,9 +2,9 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"mime/multipart"
-	"mountaineering/internal/storage"
-	"time"
 )
 
 type FileServerApp struct {
@@ -21,25 +21,26 @@ func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
 }
 
 func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader) {
-	opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-	defer cancel()
+	//opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	//defer cancel()
 
-	var data storage.File
+	errorCh := make(chan error, 0)
+	resultsCh := make(chan interface{}, 0)
 
-	doneChannel := make(chan struct{})
-	errorChannel := make(chan error)
-
-	go func(done chan struct{}, error chan error) {
-		path, err := f.File.CreateFile(files)
+	go func() {
+		result, err := f.File.CreateFile(files)
 		if err != nil {
-			error <- err
+			errorCh <- errors.New("Does not compute")
 		}
 
-		done <- struct{}{}
-	}(doneChannel, errorChannel)
+		resultsCh <- result
+	}()
 
-	//go func() {
-	//	f.StorageFileServer.CreateRecordForFile(opCtx)
-	//}()
+	select {
+	case err := <-errorCh:
+		fmt.Println(err)
+	case res := <-resultsCh:
+		fmt.Println(res)
+	}
 
 }
