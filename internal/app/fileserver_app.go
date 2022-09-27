@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"mime/multipart"
 )
@@ -20,27 +19,24 @@ func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
 	}
 }
 
-func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader) {
+func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader, name string) {
 	//opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	//defer cancel()
 
-	errorCh := make(chan error, 0)
-	resultsCh := make(chan interface{}, 0)
+	// fix this
+	errorCh := make(chan error)
+	resultCh := make(chan string)
 
 	go func() {
-		result, err := f.File.CreateFile(files)
-		if err != nil {
-			errorCh <- errors.New("Does not compute")
-		}
-
-		resultsCh <- result
+		resultCh, errorCh = f.File.CreateFile(files)
 	}()
+	defer close(resultCh)
+	defer close(errorCh)
 
 	select {
+	case result := <-resultCh:
+		fmt.Println(result)
 	case err := <-errorCh:
 		fmt.Println(err)
-	case res := <-resultsCh:
-		fmt.Println(res)
 	}
-
 }

@@ -17,14 +17,13 @@ type File struct {
 
 func (f *File) CreateFile(files []*multipart.FileHeader) (chan string, chan error) {
 	chanErr := make(chan error)
-	res := make(chan string)
+	resultCh := make(chan string)
 
 	for _, file := range files {
 		// Source
 		src, err := file.Open()
 		if err != nil {
 			chanErr <- err
-			return res, chanErr
 		}
 		defer src.Close()
 
@@ -32,18 +31,16 @@ func (f *File) CreateFile(files []*multipart.FileHeader) (chan string, chan erro
 		dst, err := os.Create(fmt.Sprintf("./uploads/%s", file.Filename))
 		if err != nil {
 			chanErr <- err
-			return res, chanErr
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
 			chanErr <- err
-			return res, chanErr
 		}
 
-		res <- fmt.Sprintf("./uploads/%s", file.Filename)
+		resultCh <- file.Filename
 	}
 
-	return res, chanErr
+	return resultCh, chanErr
 }
