@@ -24,19 +24,13 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 	//defer cancel()
 
 	// fix this
-	errorCh := make(chan error)
-	resultCh := make(chan string)
+	//errorCh := make(chan error)
 
-	go func() {
-		resultCh, errorCh = f.File.CreateFile(files)
-	}()
-	defer close(resultCh)
-	defer close(errorCh)
+	//go func() {
+	//defer close(errorCh)
 
-	select {
-	case result := <-resultCh:
-		fmt.Println(result)
-	case err := <-errorCh:
-		fmt.Println(err)
-	}
+	errorCh := f.File.CreateFile(files)
+	//}()
+	fmt.Println(errorCh)
+
 }

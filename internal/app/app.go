@@ -17,7 +17,7 @@ type Storage interface {
 }
 
 type File interface {
-	CreateFile(files []*multipart.FileHeader) (chan string, chan error)
+	CreateFile(files []*multipart.FileHeader) error
 }
 
 type Logger interface {

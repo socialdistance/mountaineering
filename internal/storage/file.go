@@ -15,32 +15,37 @@ type File struct {
 	Description string    `db:"description" json:"description"`
 }
 
-func (f *File) CreateFile(files []*multipart.FileHeader) (chan string, chan error) {
-	chanErr := make(chan error)
-	resultCh := make(chan string)
+func (f *File) CreateFile(files []*multipart.FileHeader) error {
+	//chanErr := make(chan error)
 
 	for _, file := range files {
 		// Source
 		src, err := file.Open()
 		if err != nil {
-			chanErr <- err
+			return err
+			//chanErr <- err
+			//break
 		}
 		defer src.Close()
 
 		// Destination
 		dst, err := os.Create(fmt.Sprintf("./uploads/%s", file.Filename))
 		if err != nil {
-			chanErr <- err
+			return err
+			//chanErr <- err
+			//break
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
-			chanErr <- err
+			return err
+			//chanErr <- err
+			//break
 		}
-
-		resultCh <- file.Filename
 	}
+	//close(chanErr)
 
-	return resultCh, chanErr
+	return nil
+	//return chanErr
 }
