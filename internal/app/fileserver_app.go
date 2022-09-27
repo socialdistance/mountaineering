@@ -9,7 +9,10 @@ import (
 type FileServerApp struct {
 	Logger            Logger
 	StorageFileServer Storage
-	File              File
+}
+
+type FileServer interface {
+	CreateFile(files []*multipart.FileHeader) error
 }
 
 func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
@@ -19,7 +22,7 @@ func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
 	}
 }
 
-func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader, name string) {
+func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader, name string) error {
 	//opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	//defer cancel()
 
@@ -28,9 +31,12 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 
 	//go func() {
 	//defer close(errorCh)
+	var b FileServer
 
-	errorCh := f.File.CreateFile(files)
-	//}()
-	fmt.Println(errorCh)
+	err := b.CreateFile(files)
+	if err != nil {
+		fmt.Println(err)
+	}
 
+	return nil
 }

@@ -34,7 +34,7 @@ func (s *Storage) Close() {
 	s.conn.Close()
 }
 
-func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.File) error {
+func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.FileServer) error {
 	sql := `
 		INSERT INTO files (name, path, description) VALUES ($1, $2, $3)
 	`
