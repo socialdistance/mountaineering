@@ -49,7 +49,7 @@ func TestStorage(t *testing.T) {
 			t.Fatal("Failed to connect to DB server", err)
 		}
 
-		data := internalstorage.File{
+		data := internalstorage.FileServer{
 			ID:          uuid.FromStringOrNil(""),
 			Name:        "test",
 			Path:        "test",

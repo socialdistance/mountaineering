@@ -15,27 +15,40 @@ type FileServer struct {
 	Description string    `db:"description" json:"description"`
 }
 
-func (f *FileServer) CreateFile(files []*multipart.FileHeader) error {
+func NewFileServerStorage() *FileServer {
+	return &FileServer{}
+}
+
+func (f *FileServer) CreateFile(files []*multipart.FileHeader, resultCh chan string) chan error {
+	errChan := make(chan error)
+
+	defer close(errChan)
+
 	for _, file := range files {
 		// Source
 		src, err := file.Open()
 		if err != nil {
-			return err
+			errChan <- err
+			return errChan
 		}
 		defer src.Close()
 
 		// Destination
 		dst, err := os.Create(fmt.Sprintf("./uploads/%s", file.Filename))
 		if err != nil {
-			return err
+			errChan <- err
+			return errChan
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
-			return err
+			errChan <- err
+			return errChan
 		}
+
+		resultCh <- fmt.Sprintf("./uploads/%s", file.Filename)
 	}
 
-	return nil
+	return errChan
 }
