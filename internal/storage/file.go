@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gofrs/uuid"
 	"io"
@@ -19,10 +20,11 @@ func NewFileServerStorage() *FileServer {
 	return &FileServer{}
 }
 
-func (f *FileServer) CreateFile(files []*multipart.FileHeader, resultCh chan string) chan error {
-	errChan := make(chan error)
-
-	defer close(errChan)
+func (f *FileServer) CreateFile(files []*multipart.FileHeader, resultCh chan string, errChan chan error) chan error {
+	if files == nil {
+		errChan <- errors.New("not enough files")
+		return errChan
+	}
 
 	for _, file := range files {
 		// Source

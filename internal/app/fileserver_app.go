@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"github.com/gofrs/uuid"
+	"go.uber.org/zap"
 	"mime/multipart"
 	internalstorage "mountaineering/internal/storage"
 	"time"
@@ -16,7 +16,7 @@ type FileServerApp struct {
 }
 
 type FileServerStorage interface {
-	CreateFile([]*multipart.FileHeader, chan string) chan error
+	CreateFile([]*multipart.FileHeader, chan string, chan error) chan error
 }
 
 func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
@@ -33,43 +33,36 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 	opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	// fix this
-	//errorCh := make(chan error)
+	resultCh := make(chan string, 1)
+	errCh := make(chan error)
+	defer close(resultCh)
+	defer close(errCh)
 
-	//go func() {
-	//defer close(errorCh)
-
-	doneCh := make(chan struct{})
-	resultCh := make(chan string)
-	var file internalstorage.FileServer
+	var res string
 
 	go func() {
-		err := f.FileServerStorage.CreateFile(files, resultCh)
-		if err != nil {
-			fmt.Println("err", err)
-		}
-
-		close(doneCh)
+		errCh = f.FileServerStorage.CreateFile(files, resultCh, errCh)
 	}()
 
-	go func() {
-		<-doneCh
-		res := <-resultCh
+	select {
+	case err := <-errCh:
+		//f.Logger.Error("error create file in fs", zap.Error(err))
+		return err
+	case res = <-resultCh:
+	}
 
-		file.ID = uuid.FromStringOrNil("test")
-		file.Name = res
-		file.Path = res
-		file.Description = "test"
+	file := internalstorage.FileServer{
+		ID:          uuid.FromStringOrNil("test"),
+		Name:        name,
+		Path:        res,
+		Description: "test",
+	}
 
-		err := f.Storage.CreateRecordForFile(opCtx, file)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Println(err)
-	}()
-	//defer close(doneCh)
-	//defer close(resultCh)
+	err := f.Storage.CreateRecordForFile(opCtx, file)
+	if err != nil {
+		f.Logger.Error("error create record in database", zap.Error(err))
+		return err
+	}
 
 	return nil
 }

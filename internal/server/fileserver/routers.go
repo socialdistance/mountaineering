@@ -1,9 +1,9 @@
 package fileserver
 
 import (
-	"fmt"
 	"github.com/labstack/echo/v4"
 	internalapp "mountaineering/internal/app"
+	"mountaineering/internal/server"
 	"net/http"
 )
 
@@ -26,35 +26,13 @@ func (r *RouterFileServer) Upload(c echo.Context) error {
 	// Multipart form
 	form, err := c.MultipartForm()
 	if err != nil {
-		return err
+		return c.JSON(http.StatusBadRequest, server.HTTPError{Error: "Cant get data for upload to server"})
 	}
 	files := form.File["files"]
-
 	err = r.app.UploadFileToServer(c.Request().Context(), files, name)
 	if err != nil {
-		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, server.HTTPError{Error: "Cant upload data to server"})
 	}
 
-	//for _, file := range files {
-	//	// Source
-	//	src, err := file.Open()
-	//	if err != nil {
-	//		return err
-	//	}
-	//	defer src.Close()
-	//
-	//	// Destination
-	//	dst, err := os.Create(fmt.Sprintf("./uploads/%s", file.Filename))
-	//	if err != nil {
-	//		return err
-	//	}
-	//	defer dst.Close()
-	//
-	//	// Copy
-	//	if _, err = io.Copy(dst, src); err != nil {
-	//		return err
-	//	}
-	//}
-
-	return c.HTML(http.StatusOK, fmt.Sprintf("<p>Uploaded successfully %d files with fields name=%s.</p>", len(files), name))
+	return c.JSON(http.StatusOK, server.HTTPSuccess{Success: "Success"})
 }
