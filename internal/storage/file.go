@@ -20,37 +20,40 @@ func NewFileServerStorage() *FileServer {
 	return &FileServer{}
 }
 
-func (f *FileServer) CreateFile(files []*multipart.FileHeader, resultCh chan string, errChan chan error) chan error {
+func (f *FileServer) CreateFile(files []*multipart.FileHeader, resultCh chan string) error {
 	if files == nil {
-		errChan <- errors.New("not enough files")
-		return errChan
+		return errors.New("not enough files")
 	}
 
 	for _, file := range files {
-		// Source
 		src, err := file.Open()
 		if err != nil {
-			errChan <- err
-			return errChan
+			return err
 		}
 		defer src.Close()
 
-		// Destination
 		dst, err := os.Create(fmt.Sprintf("./uploads/%s", file.Filename))
 		if err != nil {
-			errChan <- err
-			return errChan
+			return err
 		}
 		defer dst.Close()
 
 		// Copy
 		if _, err = io.Copy(dst, src); err != nil {
-			errChan <- err
-			return errChan
+			return err
 		}
 
 		resultCh <- fmt.Sprintf("./uploads/%s", file.Filename)
 	}
 
-	return errChan
+	return nil
+}
+
+func (f *FileServer) DeleteFile(fileName string) error {
+	err := os.Remove(fmt.Sprintf("./uploads/%s", fileName))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

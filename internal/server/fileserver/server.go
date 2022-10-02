@@ -31,6 +31,7 @@ func (f *FileServer) BuildRouters() {
 	f.e.Static("/", "uploads")
 
 	f.e.POST("/upload", f.router.Upload)
+	f.e.DELETE("/delete", f.router.Delete)
 }
 
 func (f *FileServer) Start() error {

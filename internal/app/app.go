@@ -13,6 +13,7 @@ type App struct {
 
 type Storage interface {
 	CreateRecordForFile(ctx context.Context, file storage.FileServer) error
+	DeleteRecord(ctx context.Context, id string) error
 }
 
 type Logger interface {

@@ -36,3 +36,18 @@ func (r *RouterFileServer) Upload(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, server.HTTPSuccess{Success: "Success"})
 }
+
+func (r *RouterFileServer) Delete(c echo.Context) (err error) {
+	deleteDto := new(server.DeleteDto)
+
+	if err = c.Bind(deleteDto); err != nil {
+		return c.JSON(http.StatusBadRequest, server.HTTPError{Error: "Cant bind data"})
+	}
+
+	err = r.app.DeleteFileFromServer(c.Request().Context(), deleteDto.Id, deleteDto.FileName)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, server.HTTPError{Error: "Cant delete record"})
+	}
+
+	return c.JSON(http.StatusOK, server.HTTPSuccess{Success: "success"})
+}

@@ -47,6 +47,7 @@ func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.FileServ
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback(ctx)
 
 	_, err = s.conn.Exec(ctx, sql, file.Name, file.Path, file.Description)
 	if err != nil {
@@ -55,5 +56,19 @@ func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.FileServ
 	}
 
 	err = tx.Commit(ctx)
+	return err
+}
+
+// DeleteRecord prepared statement
+func (s *Storage) DeleteRecord(ctx context.Context, id string) error {
+	sql := `
+		DELETE FROM files where id = $1
+	`
+
+	_, err := s.conn.Exec(ctx, sql, id)
+	if err != nil {
+		return err
+	}
+
 	return err
 }

@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"github.com/gofrs/uuid"
+	"fmt"
 	"go.uber.org/zap"
 	"mime/multipart"
 	internalstorage "mountaineering/internal/storage"
@@ -16,7 +16,8 @@ type FileServerApp struct {
 }
 
 type FileServerStorage interface {
-	CreateFile([]*multipart.FileHeader, chan string, chan error) chan error
+	CreateFile([]*multipart.FileHeader, chan string) error
+	DeleteFile(file string) error
 }
 
 func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
@@ -33,26 +34,29 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 	opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	resultCh := make(chan string, 1)
-	errCh := make(chan error)
+	resultCh := make(chan string)
 	defer close(resultCh)
-	defer close(errCh)
+
+	errorCh := make(chan error)
+	defer close(errorCh)
 
 	var res string
 
 	go func() {
-		errCh = f.FileServerStorage.CreateFile(files, resultCh, errCh)
+		err := f.FileServerStorage.CreateFile(files, resultCh)
+		if err != nil {
+			errorCh <- err
+		}
 	}()
 
 	select {
-	case err := <-errCh:
-		//f.Logger.Error("error create file in fs", zap.Error(err))
-		return err
 	case res = <-resultCh:
+	case err := <-errorCh:
+		f.Logger.Error("Error upload file", zap.Error(err))
+		return err
 	}
 
 	file := internalstorage.FileServer{
-		ID:          uuid.FromStringOrNil("test"),
 		Name:        name,
 		Path:        res,
 		Description: "test",
@@ -63,6 +67,29 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 		f.Logger.Error("error create record in database", zap.Error(err))
 		return err
 	}
+	f.Logger.Info("[+] Success upload file with name and path", zap.Strings("file", []string{name, res}))
+
+	return nil
+}
+
+func (f *FileServerApp) DeleteFileFromServer(ctx context.Context, id, fileName string) error {
+	opCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
+
+	//doneCh := make(chan struct{})
+
+	// Я хочу чтобы фукнция на удаление из файла и на удаление из базы работали параллельно.
+
+	go func() {
+		err := f.FileServerStorage.DeleteFile(fileName)
+		fmt.Println("err1", err)
+	}()
+
+	go func() {
+		err := f.Storage.DeleteRecord(opCtx, id)
+		fmt.Println("err2", err)
+		// err2 -> context canceled
+	}()
 
 	return nil
 }

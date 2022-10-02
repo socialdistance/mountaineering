@@ -34,6 +34,11 @@ func TestStorage(t *testing.T) {
 		t.Fatal("Failed to unmarshal config", err)
 	}
 
+	u2, err := uuid.NewV4()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	storage := NewStorage(ctx, config.Storage.Dsn)
 	if err := storage.Connect(ctx); err != nil {
 		t.Fatal("Failed to connect to DB server", err)
@@ -50,13 +55,34 @@ func TestStorage(t *testing.T) {
 		}
 
 		data := internalstorage.FileServer{
-			ID:          uuid.FromStringOrNil(""),
+			ID:          u2,
 			Name:        "test",
 			Path:        "test",
 			Description: "test",
 		}
 
 		err = storage.CreateRecordForFile(ctx, data)
+		require.NoError(t, err)
+
+		err = tx.Rollback(ctx)
+		if err != nil {
+			t.Fatal("Failed to rollback tx", err)
+		}
+	})
+
+	t.Run("test delete record", func(t *testing.T) {
+		tx, err := storage.conn.BeginTx(ctx, pgx4.TxOptions{
+			IsoLevel:       pgx4.Serializable,
+			AccessMode:     pgx4.ReadWrite,
+			DeferrableMode: pgx4.NotDeferrable,
+		})
+		if err != nil {
+			t.Fatal("Failed to connect to DB server", err)
+		}
+
+		id := "aa486e43-744d-42fa-8787-cffc9a34e57d"
+
+		err = storage.DeleteRecord(ctx, id)
 		require.NoError(t, err)
 
 		err = tx.Rollback(ctx)
