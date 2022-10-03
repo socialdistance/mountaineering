@@ -13,7 +13,7 @@ type FileServer struct {
 	ID          uuid.UUID `db:"id" json:"id"`
 	Name        string    `db:"name" json:"name"`
 	Path        string    `db:"name" json:"path"`
-	Description string    `db:"description" json:"description"`
+	Description string    `db:"description" json:"description,omitempty"`
 }
 
 func NewFileServerStorage() *FileServer {

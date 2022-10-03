@@ -22,6 +22,7 @@ func NewRouterFileServer(fileServerApp internalapp.FileServerApp, logger interna
 func (r *RouterFileServer) Upload(c echo.Context) error {
 	// Read form fields
 	name := c.FormValue("name")
+	description := c.FormValue("description")
 
 	// Multipart form
 	form, err := c.MultipartForm()
@@ -29,7 +30,7 @@ func (r *RouterFileServer) Upload(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, server.HTTPError{Error: "Cant get data for upload to server"})
 	}
 	files := form.File["files"]
-	err = r.app.UploadFileToServer(c.Request().Context(), files, name)
+	err = r.app.UploadFileToServer(c.Request().Context(), files, name, description)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, server.HTTPError{Error: "Cant upload data to server"})
 	}

@@ -34,6 +34,8 @@ func (s *Storage) Close() {
 	s.conn.Close()
 }
 
+/* Methods for fileserver */
+
 func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.FileServer) error {
 	sql := `
 		INSERT INTO files (name, path, description) VALUES ($1, $2, $3)
@@ -66,6 +68,21 @@ func (s *Storage) DeleteRecord(ctx context.Context, id string) error {
 	`
 
 	_, err := s.conn.Exec(ctx, sql, id)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+/* Methods for services */
+
+func (s *Storage) CreateService(ctx context.Context, service storage.Services) error {
+	sql := `
+		INSERT INTO services (name, photo, video, price, description) VALUES ($1, $2, $3, $4, $5)
+	`
+
+	_, err := s.conn.Exec(ctx, sql, service.Name, service.Photo, service.Video, service.Price, service.Description)
 	if err != nil {
 		return err
 	}

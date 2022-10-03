@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/gofrs/uuid"
 	pgx4 "github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/require"
@@ -83,6 +84,34 @@ func TestStorage(t *testing.T) {
 		id := "aa486e43-744d-42fa-8787-cffc9a34e57d"
 
 		err = storage.DeleteRecord(ctx, id)
+		require.NoError(t, err)
+
+		err = tx.Rollback(ctx)
+		if err != nil {
+			t.Fatal("Failed to rollback tx", err)
+		}
+	})
+
+	t.Run("test create service", func(t *testing.T) {
+		tx, err := storage.conn.BeginTx(ctx, pgx4.TxOptions{
+			IsoLevel:       pgx4.Serializable,
+			AccessMode:     pgx4.ReadWrite,
+			DeferrableMode: pgx4.NotDeferrable,
+		})
+		if err != nil {
+			t.Fatal("Failed to connect to DB server", err)
+		}
+
+		data := internalstorage.Services{
+			Name:        "test",
+			Photo:       "./uploads/index.jpg",
+			Video:       "./uploads/index.mp4",
+			Price:       "300",
+			Description: "test",
+		}
+
+		err = storage.CreateService(ctx, data)
+		fmt.Println(err)
 		require.NoError(t, err)
 
 		err = tx.Rollback(ctx)

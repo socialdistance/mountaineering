@@ -19,6 +19,8 @@ func NewFileServer(host, port string, router *RouterFileServer) *FileServer {
 	e := echo.New()
 	e.HideBanner = true
 
+	//e.Use(middleware.Static("/home/user/work/mountaineering/uploads"))
+
 	return &FileServer{
 		host:   host,
 		port:   port,
@@ -27,11 +29,16 @@ func NewFileServer(host, port string, router *RouterFileServer) *FileServer {
 	}
 }
 
+// BuildRouters TODO: serve static files
 func (f *FileServer) BuildRouters() {
 	f.e.Static("/", "uploads")
+	fs := http.FileServer(http.Dir("/home/user/work/mountaineering/uploads"))
+	f.e.GET("/uploads/*", echo.WrapHandler(http.StripPrefix("/uploads/", fs)))
 
-	f.e.POST("/upload", f.router.Upload)
-	f.e.DELETE("/delete", f.router.Delete)
+	fsAPI := f.e.Group("/api")
+
+	fsAPI.POST("/upload", f.router.Upload)
+	fsAPI.DELETE("/delete", f.router.Delete)
 }
 
 func (f *FileServer) Start() error {

@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"go.uber.org/zap"
 	"mime/multipart"
 	internalstorage "mountaineering/internal/storage"
@@ -30,7 +29,7 @@ func NewFileServerApp(logger Logger, storage Storage) *FileServerApp {
 	}
 }
 
-func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader, name string) error {
+func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipart.FileHeader, name, description string) error {
 	opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
@@ -59,7 +58,7 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 	file := internalstorage.FileServer{
 		Name:        name,
 		Path:        res,
-		Description: "test",
+		Description: description,
 	}
 
 	err := f.Storage.CreateRecordForFile(opCtx, file)
@@ -73,23 +72,32 @@ func (f *FileServerApp) UploadFileToServer(ctx context.Context, files []*multipa
 }
 
 func (f *FileServerApp) DeleteFileFromServer(ctx context.Context, id, fileName string) error {
-	opCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	//doneCh := make(chan struct{})
-
-	// Я хочу чтобы фукнция на удаление из файла и на удаление из базы работали параллельно.
+	errChan := make(chan error)
+	done := make(chan struct{})
 
 	go func() {
 		err := f.FileServerStorage.DeleteFile(fileName)
-		fmt.Println("err1", err)
+		if err != nil {
+			f.Logger.Error("Error delete file from server", zap.Error(err))
+			errChan <- err
+		}
+
+		close(done)
 	}()
 
 	go func() {
-		err := f.Storage.DeleteRecord(opCtx, id)
-		fmt.Println("err2", err)
-		// err2 -> context canceled
+		<-done
+		err := f.Storage.DeleteRecord(context.Background(), id)
+		if err != nil {
+			f.Logger.Error("Error delete record from database", zap.Error(err))
+			errChan <- err
+		}
+
+		close(errChan)
 	}()
 
-	return nil
+	select {
+	case err := <-errChan:
+		return err
+	}
 }
