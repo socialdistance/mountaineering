@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/gofrs/uuid"
 	pgx4 "github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/require"
@@ -111,7 +110,48 @@ func TestStorage(t *testing.T) {
 		}
 
 		err = storage.CreateService(ctx, data)
-		fmt.Println(err)
+		require.NoError(t, err)
+
+		err = tx.Rollback(ctx)
+		if err != nil {
+			t.Fatal("Failed to rollback tx", err)
+		}
+	})
+
+	t.Run("test delete service", func(t *testing.T) {
+		tx, err := storage.conn.BeginTx(ctx, pgx4.TxOptions{
+			IsoLevel:       pgx4.Serializable,
+			AccessMode:     pgx4.ReadWrite,
+			DeferrableMode: pgx4.NotDeferrable,
+		})
+		if err != nil {
+			t.Fatal("Failed to connect to DB server", err)
+		}
+
+		id := "69668859-b7a5-45ac-8bfc-14aba64ee077"
+
+		err = storage.DeleteService(ctx, id)
+		require.NoError(t, err)
+
+		err = tx.Rollback(ctx)
+		if err != nil {
+			t.Fatal("Failed to rollback tx", err)
+		}
+	})
+
+	t.Run("test update service", func(t *testing.T) {
+		tx, err := storage.conn.BeginTx(ctx, pgx4.TxOptions{
+			IsoLevel:       pgx4.Serializable,
+			AccessMode:     pgx4.ReadWrite,
+			DeferrableMode: pgx4.NotDeferrable,
+		})
+		if err != nil {
+			t.Fatal("Failed to connect to DB server", err)
+		}
+
+		m := map[string]interface{}{"id": "c3f5f869-d952-41d6-8fbd-0e557254de8a", "name": "test1"}
+
+		err = storage.UpdateService(ctx, m)
 		require.NoError(t, err)
 
 		err = tx.Rollback(ctx)

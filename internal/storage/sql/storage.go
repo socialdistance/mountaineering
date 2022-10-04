@@ -7,6 +7,8 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"mountaineering/internal/storage"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type Storage struct {
@@ -64,7 +66,7 @@ func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.FileServ
 // DeleteRecord prepared statement
 func (s *Storage) DeleteRecord(ctx context.Context, id string) error {
 	sql := `
-		DELETE FROM files where id = $1
+		DELETE FROM files WHERE id = $1
 	`
 
 	_, err := s.conn.Exec(ctx, sql, id)
@@ -83,6 +85,50 @@ func (s *Storage) CreateService(ctx context.Context, service storage.Services) e
 	`
 
 	_, err := s.conn.Exec(ctx, sql, service.Name, service.Photo, service.Video, service.Price, service.Description)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (s *Storage) DeleteService(ctx context.Context, id string) error {
+	sql := `
+		DELETE FROM services WHERE id = $1
+	`
+
+	_, err := s.conn.Exec(ctx, sql, id)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (s *Storage) UpdateService(ctx context.Context, m map[string]interface{}) error {
+	var (
+		columns   []string
+		args      []interface{}
+		positions []string
+	)
+
+	pos := 1
+	for key, val := range m {
+		// if the key is user provided you need to make sure that
+		// it is a valid columname for the target table, otherwise
+		// the query will fail.
+		columns = append(columns, `"`+key+`"`)
+		args = append(args, val)
+		positions = append(positions, "$"+strconv.Itoa(pos))
+
+		pos += 1
+	}
+
+	columnsString := strings.Join(columns, ", ")
+	positionsString := strings.Join(positions, ", ")
+
+	query := "UPDATE services SET (" + columnsString + ") = (" + positionsString + ")"
+	_, err := s.conn.Exec(ctx, query, args...)
 	if err != nil {
 		return err
 	}

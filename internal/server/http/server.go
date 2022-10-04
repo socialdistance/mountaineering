@@ -32,7 +32,11 @@ func NewServer(host, port string, router *Router) *Server {
 }
 
 func (s *Server) BuildRouters() {
-	// implement me
+	serviceAPI := s.e.Group("/services")
+
+	serviceAPI.POST("/create", s.router.CreateServiceRouter)
+	serviceAPI.DELETE("/delete", s.router.DeleteServiceRouter)
+	serviceAPI.PUT("/delete", s.router.UpdateServiceRouter)
 }
 
 func (s *Server) Start() error {
