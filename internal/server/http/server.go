@@ -36,7 +36,7 @@ func (s *Server) BuildRouters() {
 
 	serviceAPI.POST("/create", s.router.CreateServiceRouter)
 	serviceAPI.DELETE("/delete", s.router.DeleteServiceRouter)
-	serviceAPI.PUT("/delete", s.router.UpdateServiceRouter)
+	serviceAPI.PUT("/update", s.router.UpdateServiceRouter)
 }
 
 func (s *Server) Start() error {

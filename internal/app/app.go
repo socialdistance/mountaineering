@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"go.uber.org/zap"
 	internalstorage "mountaineering/internal/storage"
 	"time"
@@ -53,6 +54,33 @@ func (a *App) DeleteServiceApp(ctx context.Context, id string) error {
 	err := a.storage.DeleteService(opCtx, id)
 	if err != nil {
 		a.logger.Error("Can't delete service", zap.Error(err))
+		return err
+	}
+
+	return err
+}
+
+func (a *App) UpdateServiceApp(ctx context.Context, service internalstorage.Services) error {
+	opCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	var m map[string]interface{}
+
+	marshal, err := json.Marshal(service)
+	if err != nil {
+		a.logger.Error("Cant marshal service", zap.Error(err))
+		return err
+	}
+
+	err = json.Unmarshal(marshal, &m)
+	if err != nil {
+		a.logger.Error("Cant unmarshall service", zap.Error(err))
+		return err
+	}
+
+	err = a.storage.UpdateService(opCtx, m)
+	if err != nil {
+		a.logger.Error("Can't update service", zap.Error(err))
 		return err
 	}
 

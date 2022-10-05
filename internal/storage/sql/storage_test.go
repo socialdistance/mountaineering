@@ -149,7 +149,7 @@ func TestStorage(t *testing.T) {
 			t.Fatal("Failed to connect to DB server", err)
 		}
 
-		m := map[string]interface{}{"id": "c3f5f869-d952-41d6-8fbd-0e557254de8a", "name": "test1"}
+		m := map[string]interface{}{"id": "f6745735-61da-48ba-922a-cc7adc959712", "price": "400"}
 
 		err = storage.UpdateService(ctx, m)
 		require.NoError(t, err)

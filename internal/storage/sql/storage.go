@@ -3,7 +3,6 @@ package sql
 import (
 	"context"
 	"fmt"
-	pgx4 "github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"mountaineering/internal/storage"
 	"os"
@@ -43,23 +42,11 @@ func (s *Storage) CreateRecordForFile(ctx context.Context, file storage.FileServ
 		INSERT INTO files (name, path, description) VALUES ($1, $2, $3)
 	`
 
-	tx, err := s.conn.BeginTx(ctx, pgx4.TxOptions{
-		IsoLevel:       pgx4.Serializable,
-		AccessMode:     pgx4.ReadWrite,
-		DeferrableMode: pgx4.NotDeferrable,
-	})
+	_, err := s.conn.Exec(ctx, sql, file.Name, file.Path, file.Description)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
 
-	_, err = s.conn.Exec(ctx, sql, file.Name, file.Path, file.Description)
-	if err != nil {
-		tx.Rollback(ctx)
-		return err
-	}
-
-	err = tx.Commit(ctx)
 	return err
 }
 
