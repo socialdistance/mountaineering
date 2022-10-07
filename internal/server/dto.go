@@ -13,7 +13,7 @@ type DeleteDto struct {
 type ServiceDto struct {
 	Id          uuid.UUID `json:"id" from:"id" query:"id"`
 	Name        string    `json:"name" from:"name" query:"name"`
-	Photo       string    `json:"photo" from:"photo" query:"photo"`
+	Photo       string    `json:"photo,omitempty" from:"photo" query:"photo"`
 	Video       string    `json:"video" from:"video" query:"video"`
 	Price       string    `json:"price" from:"price" query:"price"`
 	Description string    `json:"description" from:"description" query:"description"`

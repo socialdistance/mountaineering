@@ -99,6 +99,9 @@ func (s *Storage) UpdateService(ctx context.Context, m map[string]interface{}) e
 		positions []string
 	)
 
+	idString := m["id"]
+	delete(m, "id")
+
 	pos := 1
 	for key, val := range m {
 		// if the key is user provided you need to make sure that
@@ -114,7 +117,21 @@ func (s *Storage) UpdateService(ctx context.Context, m map[string]interface{}) e
 	columnsString := strings.Join(columns, ", ")
 	positionsString := strings.Join(positions, ", ")
 
-	query := "UPDATE services SET (" + columnsString + ") = (" + positionsString + ")"
+	// i use it bcs update dont work, if i have 2 or more fields and i need use ("+columnsString+")
+	// if i have just 1 field i need use "+columnsString+"
+	if len(m) > 1 {
+		query := fmt.Sprintf("UPDATE services SET ("+columnsString+") = ("+positionsString+") WHERE id='%s'", idString)
+		fmt.Println(query)
+		_, err := s.conn.Exec(ctx, query, args...)
+		if err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	query := fmt.Sprintf("UPDATE services SET "+columnsString+" = "+positionsString+" WHERE id='%s'", idString)
+	fmt.Println(query)
 	_, err := s.conn.Exec(ctx, query, args...)
 	if err != nil {
 		return err
